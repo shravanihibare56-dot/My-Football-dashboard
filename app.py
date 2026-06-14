@@ -131,9 +131,8 @@ else:
                         away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
                     # जुन्या st.dataframe किंवा st.table ऐवजी हा कोड टाका:
-                    for index, row in df.iterrows():
-                         st.write(f"**{row['Statistic']}** : {row['Home Team']} vs {row['Away Team']}") # सुंदर सुटसुटीत टेबल फॉर्मेट
-
+                    for index, row in stats_df.iterrows():
+                        st.write(f"**{row['Statistic']}** : {row[home_team]} vs {row[away_team]}")
                 with col2:
                     st.subheader("📈 ML Win Probability")
                     fig, ax = plt.subplots(figsize=(6, 3))
