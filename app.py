@@ -132,7 +132,7 @@ else:
                     })
                     # जुन्या st.dataframe किंवा st.table ऐवजी हा कोड टाका:
                     for index, row in df.iterrows():
-                    st.write(f"**{row['Statistic']}** : {row['Home Team']} vs {row['Away Team']}") # सुंदर सुटसुटीत टेबल फॉर्मेट
+                        st.write(f"**{row['Statistic']}** : {row['Home Team']} vs {row['Away Team']}") # सुंदर सुटसुटीत टेबल फॉर्मेट
 
                 with col2:
                     st.subheader("📈 ML Win Probability")
