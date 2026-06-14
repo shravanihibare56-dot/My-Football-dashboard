@@ -130,7 +130,9 @@ else:
                         home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
                         away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
-                    st.table(stats_df.astype(str)) # सुंदर सुटसुटीत टेबल फॉर्मेट
+                    # जुन्या st.dataframe किंवा st.table ऐवजी हा कोड टाका:
+                    for index, row in df.iterrows():
+                    st.write(f"**{row['Statistic']}** : {row['Home Team']} vs {row['Away Team']}") # सुंदर सुटसुटीत टेबल फॉर्मेट
 
                 with col2:
                     st.subheader("📈 ML Win Probability")
