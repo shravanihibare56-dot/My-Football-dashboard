@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ⚙️ CONFIGURATION
-API_KEY = "f826578e51msh2d91a61913587f4p1523b1jsn04cdddb2d289" # तुझी चालू असलेली की
+API_KEY = "8858c847b1mshd6dbdb7e1c8e2cbp169f7ejsnc2b348db8d82" # तुझी चालू असलेली की
 HOST = "free-api-live-football-data.p.rapidapi.com"
 
 headers = {
@@ -128,7 +128,7 @@ else:
                         home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
                         away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
-                    st.table(stats_df) # सुंदर सुटसुटीत टेबल फॉर्मेट
+                    st.table(stats_df.astype(str)) # सुंदर सुटसुटीत टेबल फॉर्मेट
 
                 with col2:
                     st.subheader("📈 ML Win Probability")
