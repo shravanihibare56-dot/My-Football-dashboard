@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+os.environ["STREAMLIT_LEGACY_SERIALIZE"] = "True"
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
