@@ -62,7 +62,7 @@ else:
     match_id, h_name, a_name, home_score, away_score = get_live_match_id()
 
 if not match_id:
-    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाहीये. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
+    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाहीye. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
 else:
     st.sidebar.info(f"Monitoring ID: {match_id}")
     
@@ -83,6 +83,18 @@ else:
                 away_team = detail_data.get('away_team_name', a_name)
                 
                 # ३. स्कोअर फेचिंग
+                score_url = f"https://{HOST}/football-get-match-score"
+                score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
+                
+                home_goals = home_score
+                away_goals = away_score
+                
+                scores_list = score_res.get('response', {}).get('scores', [])
+                if scores_list:
+                    for s in scores_list:
+                        if s.get('name') == home_team: home_goals = int(s.get('score', home_goals))
+                        if s.get('name') == away_team: away_goals = int(s.get('score', away_goals))
+
                 # ४. स्टॅट्स मिळवणे
                 stats_url = f"https://{HOST}/football-get-match-statistics"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
@@ -112,7 +124,6 @@ else:
                         home_corners = int(clean_stat(s.get('home', 0)))
                         away_corners = int(clean_stat(s.get('away', 0)))
 
-                
                 # ५. ML Odds Calculation
                 base_score = 50
                 goal_diff = (home_goals - away_goals) * 25.0
@@ -132,12 +143,12 @@ else:
                     st.subheader("📊 Match Statistics")
                     stats_df = pd.DataFrame({
                         "Statistic": ["Possession (%)", "Shots on Target", "Corners", "🟨 Yellow Cards", "🟥 Red Cards"],
-                        home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
-                        away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
+                        "Home": [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
+                        "Away": [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
                     
                     for index, row in stats_df.iterrows():
-                        st.write(f"**{row['Statistic']}** : {row[home_team]} vs {row[away_team]}")
+                        st.write(f"**{row['Statistic']}** : {row['Home']} vs {row['Away']}")
                         
                 with col2:
                     st.subheader("📈 ML Win Probability")
@@ -153,3 +164,4 @@ else:
             st.error(f"डेटा लोड करताना अडचण आली: {e}")
     else:
         st.info("👈 डाव्या बाजूला असलेल्या 'Refresh / Load Data' बटणावर क्लिक करा, डेटा लगेच लोड होईल!")
+            
