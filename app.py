@@ -38,6 +38,7 @@ def get_live_match_id():
         url = f"https://{HOST}/football-get-live-matches"
         res = requests.get(url, headers=headers, timeout=10).json()
         matches = res.get('response', {}).get('live', [])
+        st.write(res)
         if matches:
             first_match = matches[0]
             return str(first_match.get('id')), first_match.get('home_team', 'Home'), first_match.get('away_team', 'Away')
