@@ -93,7 +93,7 @@ else:
                 scores_list = score_res.get('response', {}).get('scores', [])
                 if scores_list:
                     for s in stats_res.get('response', {}).get('statistic', []):
-                    name = s.get('name', '').lower()
+                        name = s.get('name', '').lower()
                     # अधिक सोपे कीवर्ड्स जे हमखास मॅच होतील
                     if 'poss' in name:
                         home_pos = clean_stat(s.get('home', 50))
