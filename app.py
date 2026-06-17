@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ⚙️ CONFIGURATION
-API_KEY = "8858c847b1mshd6dbdb7e1c8e2cbp169f7ejsnc2b348db8d82" # तुझी चालू असलेली की
+API_KEY = "c97ee16461mshb91f344f9574d5ap14b4cbjsn6bdee3318502" # तुझी चालू असलेली की
 HOST = "free-api-live-football-data.p.rapidapi.com"
 
 headers = {
