@@ -35,7 +35,7 @@ refresh_btn = st.sidebar.button("🔄 Refresh / Load Data")
 @st.cache_data(ttl=300) # ५ मिनिटे कॅशे (कॉल्स वाचवण्यासाठी)
 def get_live_match_id():
     try:
-        url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-detail"
+        url = "https://free-api-live-football-data.p.rapidapi.com/football-current-live"
         res = requests.get(url, headers=headers, timeout=10).json()
         matches = res.get('response', {}).get('live', [])
         st.write(res)
