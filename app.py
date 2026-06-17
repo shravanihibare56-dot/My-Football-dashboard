@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ⚙️ CONFIGURATION
-API_KEY = "c97ee16461mshb91f344f9574d5ap14b4cbjsn6bdee3318502" # तुझी चालू असलेली की
+API_KEY = "c97ee16461mshb91f344f9574d5ap14b4cbjsn6bdee3318502" 
 HOST = "free-api-live-football-data.p.rapidapi.com"
 
 headers = {
@@ -35,23 +35,31 @@ refresh_btn = st.sidebar.button("🔄 Refresh / Load Data")
 @st.cache_data(ttl=300) # ५ मिनिटे कॅशे (कॉल्स वाचवण्यासाठी)
 def get_live_match_id():
     try:
-        url = "https://free-api-live-football-data.p.rapidapi.com/football-current-live"
+        url = f"https://{HOST}/football-current-live"
         res = requests.get(url, headers=headers, timeout=10).json()
         matches = res.get('response', {}).get('live', [])
-        st.write(res)
+        
         if matches:
             first_match = matches[0]
-            return str(first_match.get('id')), first_match.get('home_team', 'Home'), first_match.get('away_team', 'Away')
-    except:
+            # नवीन API च्या संरचनेनुसार नावे आणि स्कोअर काढणे
+            home_name = first_match.get('home', {}).get('name', 'Home')
+            away_name = first_match.get('away', {}).get('name', 'Away')
+            home_score = first_match.get('home', {}).get('score', 0)
+            away_score = first_match.get('away', {}).get('score', 0)
+            match_id = str(first_match.get('id'))
+            
+            return match_id, home_name, away_name, home_score, away_score
+    except Exception as e:
         pass
-    return None, None, None
+    return None, "Home Team", "Away Team", 0, 0
 
-# आयडी ठरवणे
+# आयडी आणि सुरुवातीचा डेटा ठरवणे
 if test_id.strip():
     match_id = test_id.strip()
     h_name, a_name = "Home Team", "Away Team"
+    home_score, away_score = 0, 0
 else:
-    match_id, h_name, a_name = get_live_match_id()
+    match_id, h_name, a_name, home_score, away_score = get_live_match_id()
 
 if not match_id:
     st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाहीये. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
@@ -70,16 +78,23 @@ else:
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
                 detail_data = detail_res.get('response', {}).get('detail', {})
                 
+                # जर डीप डिटेल्स मिळाले नाहीत तर मूळ नावे वापरू
                 home_team = detail_data.get('home_team_name', h_name)
                 away_team = detail_data.get('away_team_name', a_name)
                 
                 # ३. स्कोअर फेचिंग
                 score_url = f"https://{HOST}/football-get-match-score"
                 score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
-                home_goals, away_goals = 0, 0
-                for s in score_res.get('response', {}).get('scores', []):
-                    if s.get('name') == home_team: home_goals = int(s.get('score', 0))
-                    if s.get('name') == away_team: away_goals = int(s.get('score', 0))
+                
+                # आधी थेट मॅच आयडी वरून आलेला स्कोअर वापरू, नसल्यास लूप चालवू
+                home_goals = home_score
+                away_goals = away_score
+                
+                scores_list = score_res.get('response', {}).get('scores', [])
+                if scores_list:
+                    for s in scores_list:
+                        if s.get('name') == home_team: home_goals = int(s.get('score', home_goals))
+                        if s.get('name') == away_team: away_goals = int(s.get('score', away_goals))
 
                 # ४. स्टॅट्स मिळवणे
                 stats_url = f"https://{HOST}/football-get-match-statistics"
@@ -119,7 +134,7 @@ else:
                 home_prob = round(max(5, min(95, final_odds)), 2)
                 away_prob = round(100 - home_prob, 2)
 
-                # स्क्रीनवर डेटा दाखवणे
+                # स्क्रीनवर डेटा दाखवणे (डायनॅमिक नावांसह)
                 st.header(f"🏆 {home_team} {home_goals} - {away_goals} {away_team}")
                 st.write("---")
                 
@@ -131,9 +146,10 @@ else:
                         home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
                         away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
-                    # जुन्या st.dataframe किंवा st.table ऐवजी हा कोड टाका:
+                    
                     for index, row in stats_df.iterrows():
                         st.write(f"**{row['Statistic']}** : {row[home_team]} vs {row[away_team]}")
+                        
                 with col2:
                     st.subheader("📈 ML Win Probability")
                     fig, ax = plt.subplots(figsize=(6, 3))
@@ -145,6 +161,6 @@ else:
                     st.pyplot(fig)
                     
         except Exception as e:
-            st.error("डेटा लोड करताना अडचण आली. कृपया बटण पुन्हा दाबा.")
+            st.error(f"डेटा लोड करताना अडचण आली: {e}")
     else:
         st.info("👈 डाव्या बाजूला असलेल्या 'Refresh / Load Data' बटणावर क्लिक करा, डेटा लगेच लोड होईल!")
