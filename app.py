@@ -98,7 +98,7 @@ else:
 
                 # ४. स्टॅट्स मिळवणे
                 stats_url = f"https://{HOST}/football-get-match-statistics"
-                stats_res = session.get(stats_url, params={"eventId": match_id}, timeout=10).json()
+                stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
                 home_pos, away_pos = 50.0, 50.0
                 home_shots, away_shots = 0, 0
@@ -106,7 +106,7 @@ else:
                 home_red, away_red = 0, 0
                 home_corners, away_corners = 0, 0
 
-                for s in stats_res.get('response', {}).get('statistics', []):
+                for s in stats_res.get('response', {}).get('statistic', []):
                     name = s.get('name', '').lower()
                     if 'possession' in name:
                         home_pos = clean_stat(s.get('home', 50))
