@@ -83,18 +83,19 @@ else:
                 away_team = detail_data.get('away_team_name', a_name)
                 
                 # ३. स्कोअर फेचिंग
-                score_url = f"https://{HOST}/football-get-match-score"
-                score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
+                # ४. स्टॅट्स मिळवणे
+                stats_url = f"https://{HOST}/football-get-match-statistics"
+                stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
-                # आधी थेट मॅच आयडी वरून आलेला स्कोअर वापरू, नसल्यास लूप चालवू
-                home_goals = home_score
-                away_goals = away_score
-                
-                scores_list = score_res.get('response', {}).get('scores', [])
-                if scores_list:
-                    for s in stats_res.get('response', {}).get('statistic', []):
-                        name = s.get('name', '').lower()
-                    # अधिक सोपे कीवर्ड्स जे हमखास मॅच होतील
+                home_pos, away_pos = 50.0, 50.0
+                home_shots, away_shots = 0, 0
+                home_yellow, away_yellow = 0, 0
+                home_red, away_red = 0, 0
+                home_corners, away_corners = 0, 0
+
+                # इथून लूप आणि अचूक कीवर्ड्स सुरू होतात
+                for s in stats_res.get('response', {}).get('statistic', []):
+                    name = s.get('name', '').lower()
                     if 'poss' in name:
                         home_pos = clean_stat(s.get('home', 50))
                         away_pos = clean_stat(s.get('away', 50))
