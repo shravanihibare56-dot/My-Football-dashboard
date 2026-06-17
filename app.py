@@ -92,26 +92,13 @@ else:
                 
                 scores_list = score_res.get('response', {}).get('scores', [])
                 if scores_list:
-                    for s in scores_list:
-                        if s.get('name') == home_team: home_goals = int(s.get('score', home_goals))
-                        if s.get('name') == away_team: away_goals = int(s.get('score', away_goals))
-
-                # ४. स्टॅट्स मिळवणे
-                stats_url = f"https://{HOST}/football-get-match-statistics"
-                stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
-                
-                home_pos, away_pos = 50.0, 50.0
-                home_shots, away_shots = 0, 0
-                home_yellow, away_yellow = 0, 0
-                home_red, away_red = 0, 0
-                home_corners, away_corners = 0, 0
-
-                for s in stats_res.get('response', {}).get('statistic', []):
+                    for s in stats_res.get('response', {}).get('statistic', []):
                     name = s.get('name', '').lower()
-                    if 'possession' in name:
+                    # अधिक सोपे कीवर्ड्स जे हमखास मॅच होतील
+                    if 'poss' in name:
                         home_pos = clean_stat(s.get('home', 50))
                         away_pos = clean_stat(s.get('away', 50))
-                    elif 'target' in name:
+                    elif 'shot' in name or 'target' in name:
                         home_shots = int(clean_stat(s.get('home', 0)))
                         away_shots = int(clean_stat(s.get('away', 0)))
                     elif 'yellow' in name:
@@ -124,6 +111,7 @@ else:
                         home_corners = int(clean_stat(s.get('home', 0)))
                         away_corners = int(clean_stat(s.get('away', 0)))
 
+                
                 # ५. ML Odds Calculation
                 base_score = 50
                 goal_diff = (home_goals - away_goals) * 25.0
