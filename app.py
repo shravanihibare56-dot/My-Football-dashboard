@@ -74,7 +74,7 @@ else:
                 session.headers.update(headers)
                 
                 # २. मॅच डिटेल्स (नावे)
-                detail_url = f"https://{HOST}/football-get-match-detail"
+                detail_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-detail"
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
                 detail_data = detail_res.get('response', {}).get('detail', {})
                 
@@ -83,7 +83,7 @@ else:
                 away_team = detail_data.get('away_team_name', a_name)
                 
                 # ३. स्कोअर फेचिंग
-                score_url = f"https://{HOST}/football-get-match-score"
+                score_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-score"
                 score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
                 
                 home_goals = home_score
@@ -96,7 +96,7 @@ else:
                         if s.get('name') == away_team: away_goals = int(s.get('score', away_goals))
 
                 # ४. स्टॅट्स मिळवणे
-                stats_url = f"https://{HOST}/football-get-match-statistics"
+                stats_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-event-all-stats"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
                 home_pos, away_pos = 50.0, 50.0
