@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ⚙️ CONFIGURATION
-API_KEY = "c97ee16461mshb91f344f9574d5ap14b4cbjsn6bdee3318502" 
+API_KEY = "964bf7fbc8msh59462ccd3956050p160456jsnf51e5c04bf49" 
 HOST = "free-api-live-football-data.p.rapidapi.com"
 
 headers = {
