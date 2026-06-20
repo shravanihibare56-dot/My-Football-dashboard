@@ -21,24 +21,41 @@ def clean_stat(val):
     except:
         return 0.0
 
+# 🚀 नवं हुशार फंक्शन: जे JSON मध्ये कुठेही लपलेले स्टॅट्स शोधून काढेल
+def get_stat_values(data, keywords):
+    if isinstance(data, dict):
+        title = str(data.get('title', '')).lower()
+        # जर टायटलमध्ये आपला कीवर्ड असेल, तर त्याचे स्टॅट्स परत पाठवा
+        if any(kw in title for kw in keywords):
+            s = data.get('stats')
+            if isinstance(s, list) and len(s) >= 2:
+                return s
+        # नाहीतर डिक्शनरीच्या आतल्या लेयरमध्ये शोधा
+        for v in data.values():
+            res = get_stat_values(v, keywords)
+            if res: return res
+    elif isinstance(data, list):
+        # जर लिस्ट असेल, तर प्रत्येक आयटममध्ये शोधा
+        for item in data:
+            res = get_stat_values(item, keywords)
+            if res: return res
+    return None
+
 # 🌟 WEB INTERFACE
 st.set_page_config(page_title="Live Football Analytics", layout="wide")
 st.title("⚽ AUTOMATED REAL-TIME FOOTBALL DASHBOARD")
 st.write("---")
 
-# एपीआय कॉल्स वाचवण्यासाठी साईडबार डिझाईन
 st.sidebar.header("🎯 Match Control Center")
 test_id = st.sidebar.text_input("RapidAPI Match ID (Optional):", value="")
 refresh_btn = st.sidebar.button("🔄 Refresh / Load Data")
 
-# १. लाईव्ह मॅच आयडी मिळवणे
 @st.cache_data(ttl=300)
 def get_live_match_id():
     try:
         url = "https://free-api-live-football-data.p.rapidapi.com/football-current-live"
         res = requests.get(url, headers=headers, timeout=10).json()
         matches = res.get('response', {}).get('live', [])
-        
         if matches:
             first_match = matches[0]
             home_name = first_match.get('home', {}).get('name', 'Home Team')
@@ -47,7 +64,7 @@ def get_live_match_id():
             away_score = first_match.get('away', {}).get('score', 0)
             match_id = str(first_match.get('id'))
             return match_id, home_name, away_name, home_score, away_score
-    except Exception as e:
+    except:
         pass
     return None, "Home Team", "Away Team", 0, 0
 
@@ -70,80 +87,72 @@ else:
             with requests.Session() as session:
                 session.headers.update(headers)
                 
-                # २. मॅच डिटेल्स (नावे मिळवणे)
+                # २. मॅच डिटेल्स
                 detail_url = f"https://{HOST}/football-get-match-detail"
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
-                detail_data = detail_res.get('response', {}).get('detail', {})
+                detail_data = detail_res.get('response', {})
+                if isinstance(detail_data, list) and len(detail_data) > 0:
+                    detail_data = detail_data[0]
+                elif not isinstance(detail_data, dict):
+                    detail_data = {}
+                detail_info = detail_data.get('detail', {})
                 
-                match_name_raw = detail_data.get('matchName', '')
+                match_name_raw = detail_info.get('matchName', '')
                 if "-vs-" in match_name_raw:
                     teams_part = match_name_raw.split('_')[0]
                     home_team = teams_part.split('-vs-')[0].strip()
                     away_team = teams_part.split('-vs-')[1].strip()
                 else:
-                    home_team = detail_data.get('home_team_name', h_name)
-                    away_team = detail_data.get('away_team_name', a_name)
+                    home_team = detail_info.get('home_team_name', h_name)
+                    away_team = detail_info.get('away_team_name', a_name)
                 
-                # ३. स्कोअर फेचिंग
+                # ३. स्कोअर
                 score_url = f"https://{HOST}/football-get-match-score"
                 score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
-                
-                home_goals = home_score
-                away_goals = away_score
-                
-                scores_list = score_res.get('response', {}).get('scores', [])
+                home_goals, away_goals = home_score, away_score
+                score_resp_data = score_res.get('response', {})
+                if isinstance(score_resp_data, list) and len(score_resp_data) > 0:
+                    score_resp_data = score_resp_data[0]
+                elif not isinstance(score_resp_data, dict):
+                    score_resp_data = {}
+                scores_list = score_resp_data.get('scores', [])
                 if scores_list:
                     for s in scores_list:
                         s_name = s.get('name', '').lower()
                         if home_team.lower() in s_name: home_goals = int(s.get('score', home_goals))
                         elif away_team.lower() in s_name: away_goals = int(s.get('score', away_goals))
 
-                # ४. स्टॅट्स मिळवणे (व्हिडिओतील नवीन रचनेनुसार)
+                # ४. स्टॅट्स (नवीन स्मार्ट पद्धतीने)
                 stats_url = f"https://{HOST}/football-get-match-statistics"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
-                home_pos, away_pos = 50.0, 50.0
-                home_shots, away_shots = 0, 0
-                home_yellow, away_yellow = 0, 0
-                home_red, away_red = 0, 0
-                home_corners, away_corners = 0, 0
+                pos_data = get_stat_values(stats_res, ['possession'])
+                shots_data = get_stat_values(stats_res, ['shots on target'])
+                corners_data = get_stat_values(stats_res, ['corner kicks', 'corners'])
+                yellow_data = get_stat_values(stats_res, ['yellow cards'])
+                red_data = get_stat_values(stats_res, ['red cards'])
 
-                categories = stats_res.get('response', {}).get('stats', [])
-                
-                for category in categories:
-                    inner_stats = category.get('stats', [])
-                    for s in inner_stats:
-                        name = s.get('title', '').lower()
-                        val_array = s.get('stats', [0, 0])
-                        
-                        if len(val_array) >= 2:
-                            if 'possession' in name:
-                                home_pos = clean_stat(val_array[0])
-                                away_pos = clean_stat(val_array[1])
-                            elif 'shot' in name and 'target' in name and 'off' not in name:
-                                home_shots = int(clean_stat(val_array[0]))
-                                away_shots = int(clean_stat(val_array[1]))
-                            elif 'yellow' in name:
-                                home_yellow = int(clean_stat(val_array[0]))
-                                away_yellow = int(clean_stat(val_array[1]))
-                            elif 'red' in name:
-                                home_red = int(clean_stat(val_array[0]))
-                                away_red = int(clean_stat(val_array[1]))
-                            elif 'corner' in name:
-                                home_corners = int(clean_stat(val_array[0]))
-                                away_corners = int(clean_stat(val_array[1]))
+                home_pos = clean_stat(pos_data[0]) if pos_data else 50.0
+                away_pos = clean_stat(pos_data[1]) if pos_data else 50.0
+                home_shots = int(clean_stat(shots_data[0])) if shots_data else 0
+                away_shots = int(clean_stat(shots_data[1])) if shots_data else 0
+                home_corners = int(clean_stat(corners_data[0])) if corners_data else 0
+                away_corners = int(clean_stat(corners_data[1])) if corners_data else 0
+                home_yellow = int(clean_stat(yellow_data[0])) if yellow_data else 0
+                away_yellow = int(clean_stat(yellow_data[1])) if yellow_data else 0
+                home_red = int(clean_stat(red_data[0])) if red_data else 0
+                away_red = int(clean_stat(red_data[1])) if red_data else 0
 
-                # ५. ML Odds Calculation
+                # ५. ML Odds
                 base_score = 50
                 goal_diff = (home_goals - away_goals) * 25.0
                 possession_diff = (home_pos - away_pos) * 0.5
                 shots_diff = (home_shots - away_shots) * 4.0
-                
                 final_odds = base_score + goal_diff + possession_diff + shots_diff
                 home_prob = round(max(5, min(95, final_odds)), 2)
                 away_prob = round(100 - home_prob, 2)
 
-                # स्क्रीनवर डेटा दाखवणे
+                # UI Display
                 st.header(f"🏆 {home_team} {home_goals} - {away_goals} {away_team}")
                 st.write("---")
                 
@@ -155,7 +164,6 @@ else:
                         home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
                         away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
-                    
                     for index, row in stats_df.iterrows():
                         st.write(f"**{row['Statistic']}** : {row[home_team]} vs {row[away_team]}")
                         
@@ -171,4 +179,3 @@ else:
                     
         except Exception as e:
             st.error(f"डेटा लोड करताना अडचण आली: {e}")
-                
