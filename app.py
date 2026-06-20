@@ -43,7 +43,7 @@ def get_stat_values(data, keywords):
 
 # 🌟 WEB INTERFACE
 st.set_page_config(page_title="Live Football Analytics", layout="wide")
-st.title("⚽ AUTOMATED REAL-TIME FOOTBALL DASHBOARD ⚽")
+st.title("⚽ AUTOMATED REAL-TIME FOOTBALL DASHBOARD⚽")
 st.write("---")
 
 st.sidebar.header("🎯 Match Control Center")
