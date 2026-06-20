@@ -62,7 +62,7 @@ else:
     match_id, h_name, a_name, home_score, away_score = get_live_match_id()
 
 if not match_id:
-    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाहीye. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
+    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाही. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
 else:
     st.sidebar.info(f"Monitoring ID: {match_id}")
     
@@ -78,6 +78,8 @@ else:
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
                 detail_data = detail_res.get('response', {}).get('detail', {})
                 
+                st.subheader("DEBUG: Match Detail Response")
+                st.write(detail_res)
                 # जर डीप डिटेल्स मिळाले नाहीत तर मूळ नावे वापरू
                 home_team = detail_data.get('home_team_name', h_name)
                 away_team = detail_data.get('away_team_name', a_name)
@@ -99,6 +101,8 @@ else:
                 stats_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-event-all-stats"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
+                st.subheader("DEBUG: Statistics Response")
+                st.write(stats_res)
                 home_pos, away_pos = 50.0, 50.0
                 home_shots, away_shots = 0, 0
                 home_yellow, away_yellow = 0, 0
