@@ -134,22 +134,22 @@ else:
                      # स्टॅट्स मिळवण्याचे लॉजिक (आधीसारखेच)
                      # ...
                 
-                pos_data = get_stat_values(stats_res, ['possession'])
-                shots_data = get_stat_values(stats_res, ['shots on target'])
-                corners_data = get_stat_values(stats_res, ['corner kicks', 'corners'])
-                yellow_data = get_stat_values(stats_res, ['yellow cards'])
-                red_data = get_stat_values(stats_res, ['red cards'])
+                     pos_data = get_stat_values(stats_res, ['possession'])
+                     shots_data = get_stat_values(stats_res, ['shots on target'])
+                     corners_data = get_stat_values(stats_res, ['corner kicks', 'corners'])
+                     yellow_data = get_stat_values(stats_res, ['yellow cards'])
+                     red_data = get_stat_values(stats_res, ['red cards'])
 
-                home_pos = clean_stat(pos_data[0]) if pos_data else 50.0
-                away_pos = clean_stat(pos_data[1]) if pos_data else 50.0
-                home_shots = int(clean_stat(shots_data[0])) if shots_data else 0
-                away_shots = int(clean_stat(shots_data[1])) if shots_data else 0
-                home_corners = int(clean_stat(corners_data[0])) if corners_data else 0
-                away_corners = int(clean_stat(corners_data[1])) if corners_data else 0
-                home_yellow = int(clean_stat(yellow_data[0])) if yellow_data else 0
-                away_yellow = int(clean_stat(yellow_data[1])) if yellow_data else 0
-                home_red = int(clean_stat(red_data[0])) if red_data else 0
-                away_red = int(clean_stat(red_data[1])) if red_data else 0
+                     home_pos = clean_stat(pos_data[0]) if pos_data else 50.0
+                     away_pos = clean_stat(pos_data[1]) if pos_data else 50.0
+                     home_shots = int(clean_stat(shots_data[0])) if shots_data else 0
+                     away_shots = int(clean_stat(shots_data[1])) if shots_data else 0
+                     home_corners = int(clean_stat(corners_data[0])) if corners_data else 0
+                     away_corners = int(clean_stat(corners_data[1])) if corners_data else 0
+                     home_yellow = int(clean_stat(yellow_data[0])) if yellow_data else 0
+                     away_yellow = int(clean_stat(yellow_data[1])) if yellow_data else 0
+                     home_red = int(clean_stat(red_data[0])) if red_data else 0
+                     away_red = int(clean_stat(red_data[1])) if red_data else 0
 
                 # ५. ML Odds
                 base_score = 50
