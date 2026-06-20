@@ -125,6 +125,13 @@ else:
                 # ४. स्टॅट्स (नवीन स्मार्ट पद्धतीने)
                 stats_url = f"https://{HOST}/football-get-match-statistics"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
+                stats_debug = stats_res.get('response', {})
+                # जर रिस्पॉन्स रिकामा असेल, तर स्क्रीनवर एरर न येता हे दिसेल
+                if not stats_debug:
+                    st.error("API ने या मॅचसाठी स्टॅट्स दिलेले नाहीत (मॅच खूप जुनी असू शकते).")
+                else:
+                    # स्टॅट्स मिळवण्याचे लॉजिक (आधीसारखेच)
+                    # ...
                 
                 pos_data = get_stat_values(stats_res, ['possession'])
                 shots_data = get_stat_values(stats_res, ['shots on target'])
