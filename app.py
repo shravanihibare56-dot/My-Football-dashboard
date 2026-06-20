@@ -123,34 +123,38 @@ else:
                         elif away_team.lower() in s_name: away_goals = int(s.get('score', away_goals))
 
                 # ४. स्टॅट्स (नवीन स्मार्ट पद्धतीने)
+                                
                 stats_url = f"https://{HOST}/football-get-match-statistics"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
+                # --- फिक्स: आधीच डिफॉल्ट व्हॅल्यू सेट करा ---
+                home_pos, away_pos = 50.0, 50.0
+                home_shots, away_shots = 0, 0
+                home_corners, away_corners = 0, 0
+                home_yellow, away_yellow = 0, 0
+                home_red, away_red = 0, 0
+
                 stats_debug = stats_res.get('response', {})
-                # जर रिस्पॉन्स रिकामा असेल, तर स्क्रीनवर एरर न येता हे दिसेल
-                if not stats_debug:
-                    st.error("API ने या मॅचसाठी स्टॅट्स दिलेले नाहीत (मॅच खूप जुनी असू शकते).")
-                else:
-                     # स्टॅट्स मिळवण्याचे लॉजिक (आधीसारखेच)
-                     # ...
                 
-                     pos_data = get_stat_values(stats_res, ['possession'])
-                     shots_data = get_stat_values(stats_res, ['shots on target'])
-                     corners_data = get_stat_values(stats_res, ['corner kicks', 'corners'])
-                     yellow_data = get_stat_values(stats_res, ['yellow cards'])
-                     red_data = get_stat_values(stats_res, ['red cards'])
+                if stats_debug:
+                    # जर डेटा असेल तरच अपडेट करा
+                    pos_data = get_stat_values(stats_res, ['possession'])
+                    shots_data = get_stat_values(stats_res, ['shots on target'])
+                    corners_data = get_stat_values(stats_res, ['corner kicks', 'corners'])
+                    yellow_data = get_stat_values(stats_res, ['yellow cards'])
+                    red_data = get_stat_values(stats_res, ['red cards'])
 
-                     home_pos = clean_stat(pos_data[0]) if pos_data else 50.0
-                     away_pos = clean_stat(pos_data[1]) if pos_data else 50.0
-                     home_shots = int(clean_stat(shots_data[0])) if shots_data else 0
-                     away_shots = int(clean_stat(shots_data[1])) if shots_data else 0
-                     home_corners = int(clean_stat(corners_data[0])) if corners_data else 0
-                     away_corners = int(clean_stat(corners_data[1])) if corners_data else 0
-                     home_yellow = int(clean_stat(yellow_data[0])) if yellow_data else 0
-                     away_yellow = int(clean_stat(yellow_data[1])) if yellow_data else 0
-                     home_red = int(clean_stat(red_data[0])) if red_data else 0
-                     away_red = int(clean_stat(red_data[1])) if red_data else 0
-
+                    if pos_data: home_pos, away_pos = clean_stat(pos_data[0]), clean_stat(pos_data[1])
+                    if shots_data: home_shots, away_shots = int(clean_stat(shots_data[0])), int(clean_stat(shots_data[1]))
+                    if corners_data: home_corners, away_corners = int(clean_stat(corners_data[0])), int(clean_stat(corners_data[1]))
+                    if yellow_data: home_yellow, away_yellow = int(clean_stat(yellow_data[0])), int(clean_stat(yellow_data[1]))
+                    if red_data: home_red, away_red = int(clean_stat(red_data[0])), int(clean_stat(red_data[1]))
+                else:
+                    st.warning("या मॅचसाठी स्टॅट्स उपलब्ध नाहीत, डिफॉल्ट व्हॅल्यू दाखवत आहे.")
+                
+                # आता इथून खालचा कोड 'else' च्या बाहेर असल्याने व्यवस्थित चालेल!
+                
+                
                 # ५. ML Odds
                 base_score = 50
                 goal_diff = (home_goals - away_goals) * 25.0
