@@ -32,7 +32,7 @@ test_id = st.sidebar.text_input("RapidAPI Match ID (Optional):", value="")
 refresh_btn = st.sidebar.button("🔄 Refresh / Load Data")
 
 # १. लाईव्ह मॅच आयडी मिळवणे
-@st.cache_data(ttl=300) # ५ मिनिटे कॅशे (कॉल्स वाचवण्यासाठी)
+@st.cache_data(ttl=300)
 def get_live_match_id():
     try:
         url = "https://free-api-live-football-data.p.rapidapi.com/football-current-live"
@@ -41,19 +41,16 @@ def get_live_match_id():
         
         if matches:
             first_match = matches[0]
-            # नवीन API च्या संरचनेनुसार नावे आणि स्कोअर काढणे
-            home_name = first_match.get('home', {}).get('name', 'Home')
-            away_name = first_match.get('away', {}).get('name', 'Away')
+            home_name = first_match.get('home', {}).get('name', 'Home Team')
+            away_name = first_match.get('away', {}).get('name', 'Away Team')
             home_score = first_match.get('home', {}).get('score', 0)
             away_score = first_match.get('away', {}).get('score', 0)
             match_id = str(first_match.get('id'))
-            
             return match_id, home_name, away_name, home_score, away_score
     except Exception as e:
         pass
     return None, "Home Team", "Away Team", 0, 0
 
-# आयडी आणि सुरुवातीचा डेटा ठरवणे
 if test_id.strip():
     match_id = test_id.strip()
     h_name, a_name = "Home Team", "Away Team"
@@ -62,7 +59,7 @@ else:
     match_id, h_name, a_name, home_score, away_score = get_live_match_id()
 
 if not match_id:
-    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाही. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
+    st.warning("😴 सध्या मैदानावर कोणतीही लाईव्ह मॅच सुरू नाहीये. जशी एखादी मॅच सुरू होईल किंवा तुम्ही वर टेस्ट आयडी टाकाल, डेटा लोड होईल!")
 else:
     st.sidebar.info(f"Monitoring ID: {match_id}")
     
@@ -73,19 +70,22 @@ else:
             with requests.Session() as session:
                 session.headers.update(headers)
                 
-                # २. मॅच डिटेल्स (नावे)
-                detail_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-detail"
+                # २. मॅच डिटेल्स (नावे मिळवणे)
+                detail_url = f"https://{HOST}/football-get-match-detail"
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
                 detail_data = detail_res.get('response', {}).get('detail', {})
                 
-                st.subheader("DEBUG: Match Detail Response")
-                st.write(detail_res)
-                # जर डीप डिटेल्स मिळाले नाहीत तर मूळ नावे वापरू
-                home_team = detail_data.get('home_team_name', h_name)
-                away_team = detail_data.get('away_team_name', a_name)
+                match_name_raw = detail_data.get('matchName', '')
+                if "-vs-" in match_name_raw:
+                    teams_part = match_name_raw.split('_')[0]
+                    home_team = teams_part.split('-vs-')[0].strip()
+                    away_team = teams_part.split('-vs-')[1].strip()
+                else:
+                    home_team = detail_data.get('home_team_name', h_name)
+                    away_team = detail_data.get('away_team_name', a_name)
                 
                 # ३. स्कोअर फेचिंग
-                score_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-score"
+                score_url = f"https://{HOST}/football-get-match-score"
                 score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
                 
                 home_goals = home_score
@@ -94,39 +94,44 @@ else:
                 scores_list = score_res.get('response', {}).get('scores', [])
                 if scores_list:
                     for s in scores_list:
-                        if s.get('name') == home_team: home_goals = int(s.get('score', home_goals))
-                        if s.get('name') == away_team: away_goals = int(s.get('score', away_goals))
+                        s_name = s.get('name', '').lower()
+                        if home_team.lower() in s_name: home_goals = int(s.get('score', home_goals))
+                        elif away_team.lower() in s_name: away_goals = int(s.get('score', away_goals))
 
-                # ४. स्टॅट्स मिळवणे
-                stats_url = "https://free-api-live-football-data.p.rapidapi.com/football-get-match-event-all-stats"
+                # ४. स्टॅट्स मिळवणे (व्हिडिओतील नवीन रचनेनुसार)
+                stats_url = f"https://{HOST}/football-get-match-statistics"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
-                st.subheader("DEBUG: Statistics Response")
-                st.write(stats_res)
                 home_pos, away_pos = 50.0, 50.0
                 home_shots, away_shots = 0, 0
                 home_yellow, away_yellow = 0, 0
                 home_red, away_red = 0, 0
                 home_corners, away_corners = 0, 0
 
-                # इथून लूप आणि अचूक कीवर्ड्स सुरू होतात
-                for s in stats_res.get('response', {}).get('statistic', []):
-                    name = s.get('name', '').lower()
-                    if 'poss' in name:
-                        home_pos = clean_stat(s.get('home', 50))
-                        away_pos = clean_stat(s.get('away', 50))
-                    elif 'shot' in name or 'target' in name:
-                        home_shots = int(clean_stat(s.get('home', 0)))
-                        away_shots = int(clean_stat(s.get('away', 0)))
-                    elif 'yellow' in name:
-                        home_yellow = int(clean_stat(s.get('home', 0)))
-                        away_yellow = int(clean_stat(s.get('away', 0)))
-                    elif 'red' in name:
-                        home_red = int(clean_stat(s.get('home', 0)))
-                        away_red = int(clean_stat(s.get('away', 0)))
-                    elif 'corner' in name:
-                        home_corners = int(clean_stat(s.get('home', 0)))
-                        away_corners = int(clean_stat(s.get('away', 0)))
+                categories = stats_res.get('response', {}).get('stats', [])
+                
+                for category in categories:
+                    inner_stats = category.get('stats', [])
+                    for s in inner_stats:
+                        name = s.get('title', '').lower()
+                        val_array = s.get('stats', [0, 0])
+                        
+                        if len(val_array) >= 2:
+                            if 'possession' in name:
+                                home_pos = clean_stat(val_array[0])
+                                away_pos = clean_stat(val_array[1])
+                            elif 'shot' in name and 'target' in name and 'off' not in name:
+                                home_shots = int(clean_stat(val_array[0]))
+                                away_shots = int(clean_stat(val_array[1]))
+                            elif 'yellow' in name:
+                                home_yellow = int(clean_stat(val_array[0]))
+                                away_yellow = int(clean_stat(val_array[1]))
+                            elif 'red' in name:
+                                home_red = int(clean_stat(val_array[0]))
+                                away_red = int(clean_stat(val_array[1]))
+                            elif 'corner' in name:
+                                home_corners = int(clean_stat(val_array[0]))
+                                away_corners = int(clean_stat(val_array[1]))
 
                 # ५. ML Odds Calculation
                 base_score = 50
@@ -138,7 +143,7 @@ else:
                 home_prob = round(max(5, min(95, final_odds)), 2)
                 away_prob = round(100 - home_prob, 2)
 
-                # स्क्रीनवर डेटा दाखवणे (डायनॅमिक नावांसह)
+                # स्क्रीनवर डेटा दाखवणे
                 st.header(f"🏆 {home_team} {home_goals} - {away_goals} {away_team}")
                 st.write("---")
                 
@@ -147,12 +152,12 @@ else:
                     st.subheader("📊 Match Statistics")
                     stats_df = pd.DataFrame({
                         "Statistic": ["Possession (%)", "Shots on Target", "Corners", "🟨 Yellow Cards", "🟥 Red Cards"],
-                        "Home": [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
-                        "Away": [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
+                        home_team: [f"{home_pos}%", home_shots, home_corners, home_yellow, home_red],
+                        away_team: [f"{away_pos}%", away_shots, away_corners, away_yellow, away_red]
                     })
                     
                     for index, row in stats_df.iterrows():
-                        st.write(f"**{row['Statistic']}** : {row['Home']} vs {row['Away']}")
+                        st.write(f"**{row['Statistic']}** : {row[home_team]} vs {row[away_team]}")
                         
                 with col2:
                     st.subheader("📈 ML Win Probability")
@@ -161,11 +166,9 @@ else:
                     ax.set_xlim(0, 100)
                     for bar in bars:
                         width = bar.get_width()
-                        ax.text(width + 2, bar.get_y() + bar.get_height()/2, f'{width}%', va='center', fontweight='bold')
+                        ax.text(width + 2, bar.get_y() + bar.get_height()/2, f'{width}%', va='center', fontweight='bold', color='white')
                     st.pyplot(fig)
                     
         except Exception as e:
             st.error(f"डेटा लोड करताना अडचण आली: {e}")
-    else:
-        st.info("👈 डाव्या बाजूला असलेल्या 'Refresh / Load Data' बटणावर क्लिक करा, डेटा लगेच लोड होईल!")
-            
+                
