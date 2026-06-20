@@ -130,8 +130,8 @@ else:
                 if not stats_debug:
                     st.error("API ने या मॅचसाठी स्टॅट्स दिलेले नाहीत (मॅच खूप जुनी असू शकते).")
                 else:
-                    # स्टॅट्स मिळवण्याचे लॉजिक (आधीसारखेच)
-                    # ...
+                     # स्टॅट्स मिळवण्याचे लॉजिक (आधीसारखेच)
+                     # ...
                 
                 pos_data = get_stat_values(stats_res, ['possession'])
                 shots_data = get_stat_values(stats_res, ['shots on target'])
