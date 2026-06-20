@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # ⚙️ CONFIGURATION
-API_KEY = "964bf7fbc8msh59462ccd3956050p160456jsnf51e5c04bf49" 
+API_KEY = "4eef81427amsh1fd455ad47aa1a2p17592ajsn98df93e3bca1" 
 HOST = "free-api-live-football-data.p.rapidapi.com"
 
 headers = {
@@ -89,7 +89,7 @@ else:
                 
                 # २. मॅच डिटेल्स
                 detail_url = f"https://free-api-live-football-data.p.rapidapi.com/football-get-match-detail"
-                detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
+                detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=180).json()
                 detail_data = detail_res.get('response', {})
                 if isinstance(detail_data, list) and len(detail_data) > 0:
                     detail_data = detail_data[0]
@@ -125,7 +125,7 @@ else:
                 # ४. स्टॅट्स (नवीन स्मार्ट पद्धतीने)
                                 
                 stats_url = f"https://free-api-live-football-data.p.rapidapi.com/football-get-match-event-all-stats"
-                stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
+                stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=180).json()
                 
                 # --- फिक्स: आधीच डिफॉल्ट व्हॅल्यू सेट करा ---
                 home_pos, away_pos = 50.0, 50.0
