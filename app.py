@@ -88,7 +88,7 @@ else:
                 session.headers.update(headers)
                 
                 # २. मॅच डिटेल्स
-                detail_url = f"https://{HOST}/football-get-match-detail"
+                detail_url = f"https://free-api-live-football-data.p.rapidapi.com/football-get-match-detail"
                 detail_res = session.get(detail_url, params={"eventid": match_id}, timeout=10).json()
                 detail_data = detail_res.get('response', {})
                 if isinstance(detail_data, list) and len(detail_data) > 0:
@@ -107,7 +107,7 @@ else:
                     away_team = detail_info.get('away_team_name', a_name)
                 
                 # ३. स्कोअर
-                score_url = f"https://{HOST}/football-get-match-score"
+                score_url = f"https://free-api-live-football-data.p.rapidapi.com/football-get-match-score"
                 score_res = session.get(score_url, params={"eventid": match_id}, timeout=10).json()
                 home_goals, away_goals = home_score, away_score
                 score_resp_data = score_res.get('response', {})
@@ -124,7 +124,7 @@ else:
 
                 # ४. स्टॅट्स (नवीन स्मार्ट पद्धतीने)
                                 
-                stats_url = f"https://{HOST}/football-get-match-statistics"
+                stats_url = f"https://free-api-live-football-data.p.rapidapi.com/football-get-match-event-all-stats"
                 stats_res = session.get(stats_url, params={"eventid": match_id}, timeout=10).json()
                 
                 # --- फिक्स: आधीच डिफॉल्ट व्हॅल्यू सेट करा ---
